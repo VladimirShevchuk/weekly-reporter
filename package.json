@@ -1,0 +1,14 @@
+{
+  "name": "WeeklyReporter",
+  "version": "0.0.1",
+  "author": "Volodymyr Shevchuk <volodymyr.shevchuk@infopulse.com>",
+  "description": "This application scans JIRA worklogs and provides prepared weekly report for GermanPersonnel",
+  "bin": {
+    "weekly-report" : "./app.js"
+  },
+  "dependencies" : {
+      "promise" : "7.1.1",
+      "ucfirst" : "1.0.0",
+      "commander": "2.9.0"
+  }
+}
