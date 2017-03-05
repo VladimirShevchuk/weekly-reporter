@@ -1,7 +1,7 @@
 var https   = require('https');
-var Promise = require('promise');
 var ucfirst = require('ucfirst');
 var cliArgs = require('commander');
+var JiraClient = require('./modules/jira-api-client');
 
 cliArgs
     .version('0.0.1')
@@ -42,93 +42,13 @@ function cliArgsAreValid() {
     return valid;
 }
 
-function getRequestOptions(path, method='GET', headers={}) {
+function getConnectionOptions() {
     return {
         host: cliArgs.host,
         port: 443,
         auth: cliArgs.user + ':' + cliArgs.password,
-        path: path,
-        method: method,
-        headers: headers
     };
-}
-
-var getWeeklyWorklogIds = function() {
-    return new Promise(function (resolve, reject) {
-
-        var parts = cliArgs.from.split('-');
-        var date  = new Date(parts[0], parts[1]-1, parts[2]);
-
-        var options = getRequestOptions("/rest/api/2/worklog/updated?since=" + date.getTime());
-
-        var req = https.request(options, (res) => {
-
-            var responseBody = '';
-
-            res.on('data', (d) => {
-                responseBody += d;
-            });
-
-            res.on('end', () => {
-                var json = JSON.parse(responseBody);
-                var ids = [];
-                for (var worklog of json.values) {
-                    ids.push(worklog.worklogId);
-                }
-
-                resolve(ids);
-            });
-        });
-
-        req.on('error', (e) => {
-            reject(e);
-        });
-
-        req.end();
-    });
-}
-
-var getWorklogByIds = function(ids){
-
-    return new Promise(function(resolve, reject) {
-
-        var postData = JSON.stringify({"ids": ids});
-
-        var options = getRequestOptions(
-            "/rest/api/2/worklog/list",
-            'POST',
-            {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(postData)
-            }
-        );
-
-        var req = https.request(options, (res) => {
-
-            var responseBody = '';
-
-            res.on('data', (d) => {
-                responseBody += d;
-            });
-
-            res.on('end', () => {
-                var json = JSON.parse(responseBody);
-                var worklogs = json.filter((worklog) => {
-                    return worklog.author.name === cliArgs.user
-                });
-
-                resolve(worklogs);
-            });
-        });
-
-        req.on('error', (e) => {
-            reject(e);
-        });
-
-        req.write(postData);
-        req.end();
-    });
-}
+};
 
 var printReport = function(worklogs) {
 
@@ -144,6 +64,12 @@ var printReport = function(worklogs) {
     }
 }
 
-getWeeklyWorklogIds()
-    .then(getWorklogByIds)
+var isOwnWorklog = function(worklog) {
+    return worklog.author.name === cliArgs.user
+}
+
+var client = new JiraClient(getConnectionOptions());
+client.getUpdatedWorklogIdsAsync(cliArgs.from)
+    .then(function(worklogIds){return client.getWorklogByIdsAsync(worklogIds);})
+    .then(function(worklogs){return worklogs.filter(isOwnWorklog)})
     .then(printReport);
