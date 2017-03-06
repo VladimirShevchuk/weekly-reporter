@@ -9,9 +9,9 @@ This package requires:
 
 ## Installation
 
-`git clone https://github.com/VladimirShevchuk/weekly-reporter.git`
-`cd weekly-reporter`
-`npm install`
+`git clone https://github.com/VladimirShevchuk/weekly-reporter.git`    
+`cd weekly-reporter`    
+`npm install`    
 
 ## Usage
 
