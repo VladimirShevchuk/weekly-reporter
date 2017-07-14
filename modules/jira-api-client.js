@@ -5,6 +5,41 @@ var Client = function(connectionOptions) {
    this.connectionOptions = connectionOptions;
 }
 
+Client.prototype.getTempoWorklogsAsync = function(since) {
+
+    var connectionOptions = Object.assign(
+        {
+            'path': "/rest/tempo-timesheets/3/worklogs/?dateFrom=" + since,
+            'method': 'GET'
+        },
+        this.connectionOptions
+    );
+
+    return new Promise(function (resolve, reject) {
+
+        var req = https.request(connectionOptions, (res) => {
+
+            var responseBody = '';
+
+            res.on('data', (d) => {
+                responseBody += d;
+            });
+
+            res.on('end', () => {
+                var json = JSON.parse(responseBody);
+
+                resolve(json);
+            });
+        });
+
+        req.on('error', (e) => {
+            reject(e);
+        });
+
+        req.end();
+    });
+}
+
 Client.prototype.getUpdatedWorklogIdsAsync = function(since) {
 
     var dateParts = since.split('-');

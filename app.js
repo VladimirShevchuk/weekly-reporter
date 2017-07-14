@@ -69,7 +69,6 @@ var isOwnWorklog = function(worklog) {
 }
 
 var client = new JiraClient(getConnectionOptions());
-client.getUpdatedWorklogIdsAsync(cliArgs.from)
-    .then(function(worklogIds){return client.getWorklogByIdsAsync(worklogIds);})
+client.getTempoWorklogsAsync(cliArgs.from)
     .then(function(worklogs){return worklogs.filter(isOwnWorklog)})
     .then(printReport);
